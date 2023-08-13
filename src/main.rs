@@ -1,14 +1,37 @@
+#![allow(dead_code)]
+use clap::Parser;
 use regex::Regex;
 use serde_json::{Error, Value};
 use std::io::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let room_id = read_room_id();
-    let quality = read_quality();
-    let format = read_format();
+    let Args {
+        format,
+        quality,
+        room_id,
+    } = Args::parse();
+    let is_cli = format.is_some() || quality.is_some() || room_id.is_some();
 
-    println!("正在获取直播源...\n");
+    let format = Format::from_str(&format.unwrap_or("".to_string())).ok();
+    let quality = Quality::from_str(&quality.unwrap_or("".to_string())).ok();
+
+    let room_id = match room_id {
+        Some(id) => id,
+        None => read_room_id(),
+    };
+    let quality = match quality {
+        Some(q) => q,
+        None => read_quality(),
+    };
+    let format = match format {
+        Some(f) => f,
+        None => read_format(),
+    };
+
+    if !is_cli {
+        println!("正在获取直播源...\n");
+    }
     let stream = fetch_stream(room_id, quality).await?;
     let urls = parse_stream(stream);
 
@@ -18,12 +41,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect::<Vec<&String>>();
 
     for url in urls.iter() {
-        println!("{}\n", url.trim_matches('"'));
+        println!("{}", url.trim_matches('"'));
+    }
+    if !is_cli {
+        pause();
     }
 
-    pause();
-
     Ok(())
+}
+
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(short, long)]
+    room_id: Option<u32>,
+    #[arg(short, long)]
+    quality: Option<String>,
+    #[arg(short, long)]
+    format: Option<String>,
 }
 
 fn pause() {
@@ -98,6 +132,13 @@ enum Format {
     Flv,
 }
 impl Format {
+    fn from_str(s: &str) -> Result<Self, &'static str> {
+        match s {
+            "m3u8" => Ok(Self::M3u8),
+            "flv" => Ok(Self::Flv),
+            _ => Err(""),
+        }
+    }
     fn value(&self) -> String {
         match self {
             Self::M3u8 => "m3u8".to_string(),
@@ -106,12 +147,19 @@ impl Format {
     }
 }
 
-#[allow(dead_code)]
 enum Quality {
     Low,
     High,
 }
 impl Quality {
+    fn from_str(s: &str) -> Result<Self, &'static str> {
+        match s {
+            "low" => Ok(Self::Low),
+            "high" => Ok(Self::High),
+            _ => Err(""),
+        }
+    }
+
     fn value(&self) -> u32 {
         match self {
             Self::Low => 0,
