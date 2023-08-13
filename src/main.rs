@@ -175,7 +175,14 @@ fn parse_stream(stream: Vec<Value>) -> Vec<String> {
                                 .as_array()
                                 .unwrap()
                                 .iter()
-                                .map(|i| format!("{}{}{}", i["host"], c["base_url"], i["extra"]))
+                                .map(|i| {
+                                    format!(
+                                        "{}{}{}",
+                                        i["host"].to_string().trim_matches('"'),
+                                        c["base_url"].to_string().trim_matches('"'),
+                                        i["extra"].to_string().trim_matches('"')
+                                    )
+                                })
                                 .collect::<Vec<String>>()
                         })
                         .collect::<Vec<String>>()
