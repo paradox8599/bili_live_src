@@ -1,8 +1,13 @@
 [package]
-name = "rsp"
+name = "blive_src"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = { version = "1.31.0", features = ["full"] }
+reqwest = {version = "0.11.18", features = ["json"] }
+regex = "1.9.3"
+serde = "1.0.183"
+serde_json = "1.0.104"
