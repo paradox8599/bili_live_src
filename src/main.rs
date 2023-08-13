@@ -1,5 +1,6 @@
 use regex::Regex;
 use serde_json::{Error, Value};
+use std::io::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,7 +21,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}\n", url.trim_matches('"'));
     }
 
+    pause();
+
     Ok(())
+}
+
+fn pause() {
+    let mut stdin = std::io::stdin();
+    let mut stdout = std::io::stdout();
+    write!(stdout, "Press any key to continue...").unwrap();
+    stdout.flush().unwrap();
+    let _ = stdin.read(&mut [0u8]).unwrap();
 }
 
 fn read_room_id() -> u32 {
